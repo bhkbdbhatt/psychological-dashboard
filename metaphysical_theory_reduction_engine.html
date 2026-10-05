@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Metaphysical Theory Reduction Engine (MTRE) v2.0</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f4ff',
+              100: '#e0e8ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#1e1b4b',
+              950: '#0f0e26'
+            },
+            slate: {
+              850: '#151f32',
+              900: '#0f172a',
+              950: '#020617'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome & Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <!-- D3.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+
+  <!-- KaTeX for Formal Logic Formatting -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #020617;
+      color: #f1f5f9;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* D3 SVG node styling */
+    .node circle {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .node text { font-size: 11px; fill: #cbd5e1; font-family: 'Inter', sans-serif; }
+    .link { fill: none; stroke: #334155; stroke-width: 1.5px; transition: all 0.3s ease; }
+    .link.eliminated { stroke: #ef4444; stroke-dasharray: 4,4; opacity: 0.4; }
+    .link.active { stroke: #10b981; stroke-width: 2px; }
+
+    /* Custom Glassmorphism Cards */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-panel-hover:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.15);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-100 overflow-x-hidden">
+
+  <script>
+    /*
+     * METAPHYSICAL THEORY REDUCTION ENGINE (MTRE) STATE & DATABASE
+     * Expanded taxonomy across Kuhn's 10 core categories with citations, formal axioms, and properties.
+     */
+    
+    // Comprehensive Theory Dataset
+    const RAW_THEORIES = [
+      {
+        id: "T01",
+        name: "Physicalist Reductionism / Materialism",
+        category: "Physicalism",
+        subcategory: "Reductive Physicalism",
+        citations: "Dennett (1991), Churchland (1986), Kim (1998)",
+        axioms: ["∃ Material_Substance", "∀ Mind (Mind ≡ Brain_Process)", "Physics is Causal Closed"],
+        scope_score: 82, // Hard Problem gap
+        has_unexplained_primitive: true,
+        primitive_description: "Unexplained emergence of qualitative consciousness from inert matter (Hard Problem).",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Asserts that physical matter-energy is the sole fundamental reality and consciousness is purely derivative or illusory."
+      },
+      {
+        id: "T02",
+        name: "Non-Reductive Physicalism / Functionalism",
+        category: "Physicalism",
+        subcategory: "Property Physicalism",
+        citations: "Putnam (1967), Davidson (1970)",
+        axioms: ["Physicalism holds", "Mental states supervene on physical states", "Multiple Realizability"],
+        scope_score: 78,
+        has_unexplained_primitive: true,
+        primitive_description: "Primitive supervenience relation without an explanatory bridge.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Mental states are functional states realized by physical systems without being identical to physical properties."
+      },
+      {
+        id: "T03",
+        name: "Substance Dualism (Cartesian)",
+        category: "Dualism",
+        subcategory: "Interactionist Dualism",
+        citations: "Descartes (1641), Swinburne (1986)",
+        axioms: ["∃ Res Cogitans (Mind)", "∃ Res Extensa (Matter)", "Mind ∩ Matter ≡ ∅"],
+        scope_score: 70,
+        has_unexplained_primitive: true,
+        primitive_description: "Two distinct fundamental substances require an impossible causal interaction mechanism.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Presents reality as split into two fundamentally irreducible substances: extended matter and unextended mind."
+      },
+      {
+        id: "T04",
+        name: "Property Dualism / Epiphenomenalism",
+        category: "Dualism",
+        subcategory: "Epiphenomenalism",
+        citations: "Chalmers (1996), Jackson (1982)",
+        axioms: ["Physical substrate is fundamental", "Qualia are non-physical properties", "Qualia have zero causal efficacy"],
+        scope_score: 75,
+        has_unexplained_primitive: true,
+        primitive_description: "Dual ontological properties attached to single physical substrates with one-way causation.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Physical events cause mental events, but mental events have no causal power over the physical."
+      },
+      {
+        id: "T05",
+        name: "Constitutive Micro-Panpsychism",
+        category: "Panpsychism",
+        subcategory: "Constitutive Panpsychism",
+        citations: "Goff (2017), Strawson (2006)",
+        axioms: ["Fundamental physical entities possess micro-experience", "Macro-experience = ∑ Micro-experiences"],
+        scope_score: 85,
+        has_unexplained_primitive: true,
+        primitive_description: "Combination Problem: How micro-experiences aggregate into a unified macro-subject.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Consciousness is a fundamental property of all micro-physical particles."
+      },
+      {
+        id: "T06",
+        name: "Cosmopsychism / Priority Panpsychism",
+        category: "Panpsychism",
+        subcategory: "Holistic Panpsychism",
+        citations: "Shani (2015), Nagasawa & Wager (2016)",
+        axioms: ["The Universe as a whole is a single conscious subject", "Individual minds are micro-fissures/de-combinations"],
+        scope_score: 88,
+        has_unexplained_primitive: true,
+        primitive_description: "De-combination Problem: How cosmic consciousness divides into isolated finite minds.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "The cosmos itself is the primary experiencing subject; individual subjects are localized aspects."
+      },
+      {
+        id: "T07",
+        name: "Quantum Consciousness / Orch-OR",
+        category: "Quantum Consciousness",
+        subcategory: "Orchestrated Objective Reduction",
+        citations: "Penrose & Hameroff (1996, 2014)",
+        axioms: ["Quantum superposition in neuronal microtubules", "Objective collapse ≡ Moments of proto-conscious experience"],
+        scope_score: 82,
+        has_unexplained_primitive: true,
+        primitive_description: "Equates quantum spacetime geometry collapse with subjective qualia without explaining experiential feel.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Consciousness arises from quantum computations in neuronal microtubules terminated by gravitational state reduction."
+      },
+      {
+        id: "T08",
+        name: "Integrated Information Theory (IIT 4.0)",
+        category: "Quantum Consciousness",
+        subcategory: "Informational Realism",
+        citations: "Tononi, Albantakis et al. (2023)",
+        axioms: ["Consciousness is integrated information (Φ)", "System intrinsic cause-effect power ≡ Experience"],
+        scope_score: 86,
+        has_unexplained_primitive: true,
+        primitive_description: "Mathematical identity axiom between abstract Φ matrices and phenomenal experience.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Defines consciousness mathematically as maximally integrated intrinsic cause-effect power (Φ)."
+      },
+      {
+        id: "T09",
+        name: "Berkeleyan Subjective Idealism / Solipsism",
+        category: "Idealism",
+        subcategory: "Dogmatic Idealism",
+        citations: "Berkeley (1710)",
+        axioms: ["Esse est percipi (To be is to be perceived)", "Matter does not exist", "God sustains unperceived objects"],
+        scope_score: 65,
+        has_unexplained_primitive: true,
+        primitive_description: "Requires Divine Intervention / God as constant observer to prevent world collapse.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Only minds and ideas exist; physical objects are merely collections of sensations sustained by God."
+      },
+      {
+        id: "T10",
+        name: "Analytic Idealism",
+        category: "Idealism",
+        subcategory: "Transpersonal Idealism",
+        citations: "Kastrup (2019)",
+        axioms: ["Universal Mind is the sole substrate", "Individual minds are dissociated alters", "Physical world is the dashboard representation"],
+        scope_score: 92,
+        has_unexplained_primitive: true,
+        primitive_description: "Unexplained primitive mechanism for mental dissociation (dissociative identity of Mind).",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "All reality is mental; physical matter is merely the empirical appearance of universal mental processes."
+      },
+      {
+        id: "T11",
+        name: "Objective Idealism / Absolute Idealism",
+        category: "Idealism",
+        subcategory: "Absolute Monism",
+        citations: "Hegel (1807), Bradley (1893)",
+        axioms: ["The Absolute Idea unfolds through history", "Subject and Object are dialectically integrated"],
+        scope_score: 90,
+        has_unexplained_primitive: true,
+        primitive_description: "Reifies 'The Absolute' as a positive conceptual entity.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Mind and matter are unified in the rational self-unfolding of an Absolute Mind/Spirit."
+      },
+      {
+        id: "T12",
+        name: "Spinozist Neutral Monism",
+        category: "Neutral Monism",
+        subcategory: "Dual-Aspect Monism",
+        citations: "Spinoza (1677), Mach (1886), Russell (1921)",
+        axioms: ["∃ Single Substance (Deus sive Natura)", "Thought and Extension are parallel attributes", "Substance is neutral"],
+        scope_score: 94,
+        has_unexplained_primitive: true,
+        primitive_description: "Nature of the neutral substrate itself remains conceptually unreachable or postulated as positive entity.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Reality consists of one underlying neutral substance that manifests as both mental and physical attributes."
+      },
+      {
+        id: "T13",
+        name: "Dual-Aspect Monism (Pauli-Jung / Polkinghorne)",
+        category: "Neutral Monism",
+        subcategory: "Complementarity Dual-Aspect",
+        citations: "Atmanspacher (2014), Pauli & Jung (1955)",
+        axioms: ["One psychophysically neutral reality", "Mind and Matter are complementary broken symmetries"],
+        scope_score: 93,
+        has_unexplained_primitive: true,
+        primitive_description: "The psychophysically neutral domain is posited as an unexplainable ontological realm.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Mind and matter are epistemically distinct aspects of a single psychophysically neutral underlying reality."
+      },
+      {
+        id: "T14",
+        name: "User-Interface Realism / Conscious Realism",
+        category: "Informational / Digital Physics",
+        subcategory: "Interface Theory of Perception",
+        citations: "Hoffman (2019), Wheeler (1990)",
+        axioms: ["Spacetime is a desktop interface", "Reality consists of network of Conscious Agents", "Fitness > Truth in evolution"],
+        scope_score: 89,
+        has_unexplained_primitive: true,
+        primitive_description: "Conscious agents are posited as discrete fundamental mathematical primitives.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Spacetime and physical objects are not objective reality, but an evolutionary virtual reality interface."
+      },
+      {
+        id: "T15",
+        name: "Digital Physics / It from Bit",
+        category: "Informational / Digital Physics",
+        subcategory: "Pancomputationalism",
+        citations: "Fredkin (2003), Lloyd (2006), Wolfram (2002)",
+        axioms: ["The Universe is a cellular automaton", "Information is the ontological foundation"],
+        scope_score: 80,
+        has_unexplained_primitive: true,
+        primitive_description: "Information presupposes a medium or observer to decode bit states.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Physical existence is derived entirely from information, computing processes, and mathematical algorithms."
+      },
+      {
+        id: "T16",
+        name: "Constructive Process Philosophy",
+        category: "Process Philosophy",
+        subcategory: "Whiteheadian Panexperientialism",
+        citations: "Whitehead (1929), Rescher (1996)",
+        axioms: ["Being is dynamic Process", "Reality consists of 'Actual Occasions' of experience"],
+        scope_score: 87,
+        has_unexplained_primitive: true,
+        primitive_description: "Creative advance ('Prehension') acts as an ungrounded cosmic driving force.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Fundamental reality consists not of static material substances, but of momentary interconnected events of experience."
+      },
+      {
+        id: "T17",
+        name: "Eliminative Illusionism",
+        category: "Illusionism",
+        subcategory: "Radical Eliminativism",
+        citations: "Frankish (2016), Metzinger (2003)",
+        axioms: ["Qualia do not exist", "Subjective experience is an introspective illusion produced by brain models"],
+        scope_score: 50,
+        has_unexplained_primitive: true,
+        primitive_description: "Self-contradictory: An illusion inherently requires an experiencing subject to be deceived.",
+        polarity: "POSITIVE_ONE_SIDED",
+        violates_dialectic: true,
+        summary: "Denies the existence of phenomenal consciousness altogether, treating it as a cognitive misattribution."
+      },
+      {
+        id: "T18",
+        name: "Mystical Monism / Neoplatonism",
+        category: "Perennial / Nondual Philosophy",
+        subcategory: "Emanationism",
+        citations: "Plotinus (Enneads), Shankara (Advaita Metaphysics)",
+        axioms: ["The One / Brahman is the ultimate source", "Creation is emanation or illusory superposition"],
+        scope_score: 95,
+        has_unexplained_primitive: false, // Transcendental apophatic
+        polarity: "DOGMATIC_MONISM",
+        violates_dialectic: true,
+        summary: "Asserts a singular divine source from which all reality emanates, but retains a positive cosmic substance claim."
+      },
+      {
+        id: "T19",
+        name: "Madhyamaka Śūnyatā (Emptiness / Dependent Origination)",
+        category: "Perennial / Nondual Philosophy",
+        subcategory: "Dialectical Nonduality",
+        citations: "Nāgārjuna (Mūlamadhyamakakārikā ~200 CE)",
+        axioms: ["Pratītyasamutpāda (All phenomena lack inherent existence)", "Catuṣkoṭi dialectic rejection", "Two Truths Doctrine"],
+        scope_score: 100,
+        has_unexplained_primitive: false,
+        primitive_description: "None. All conceptual primitives are dissolved; emptiness itself is empty of inherent essence.",
+        polarity: "NONDUAL",
+        violates_dialectic: false,
+        summary: "Deconstructs all one-sided metaphysical assertions (being, non-being, both, neither) through radical dependent origination."
+      },
+      {
+        id: "T20",
+        name: "Advaita Vedānta (Apophatic Consciousness)",
+        category: "Perennial / Nondual Philosophy",
+        subcategory: "Pure Nondualism",
+        citations: "Gauḍapāda (Māṇḍūkya Kārikā), Śaṅkara (8th Century)",
+        axioms: ["Nirguṇa Brahman (Pure Non-conceptual Awareness)", "Māyā (Superimposition)", "Atman ≡ Brahman"],
+        scope_score: 99,
+        has_unexplained_primitive: false,
+        primitive_description: "Awareness is not a primitive 'object' or 'substance' but the self-luminous locus of all experiencing.",
+        polarity: "NONDUAL",
+        violates_dialectic: false,
+        summary: "Nondual realization that subject and object distinction is an apparent modal modification of boundless Awareness."
+      }
+    ];
+
+    // Default Pipeline Filter Rules Definition (DSL)
+    let PIPELINE_RULES = [
+      {
+        id: "R1",
+        name: "Scope & Explanatory Completeness",
+        description: "Theory must address the Hard Problem and account for both objective structure and subjective experience.",
+        active: true,
+        type: "SCOPE_CHECK",
+        minScore: 70
+      },
+      {
+        id: "R2",
+        name: "Reductive Primordial Step",
+        description: "Eliminates theories that introduce unjustified unexplained primitives or arbitrary ontological additions.",
+        active: true,
+        type: "PRIMITIVE_CHECK",
+        rejectHasPrimitive: true
+      },
+      {
+        id: "R3",
+        name: "Dialectic Polarity & Antinomy Elimination",
+        description: "Eliminates one-sided dogmatic assertions (Materialism vs. Idealism) that violate Kantian antinomy conditions.",
+        active: true,
+        type: "DIALECTIC_CHECK",
+        rejectPolarity: "POSITIVE_ONE_SIDED"
+      },
+      {
+        id: "R4",
+        name: "Nondual Coherence & Resolution",
+        description: "Selects theories that transcend binary subject-object split via dialectical nonduality (e.g., Śūnyatā / Advaita).",
+        active: true,
+        type: "NONDUAL_CHECK",
+        requireNondual: true
+      }
+    ];
+
+    // Global Engine App State
+    let state = {
+      activeTab: "pipeline",
+      theories: JSON.parse(JSON.stringify(RAW_THEORIES)),
+      rules: JSON.parse(JSON.stringify(PIPELINE_RULES)),
+      selectedTheoryForModal: null,
+      matrixSelectedIds: ["T01", "T05", "T10", "T19"],
+      logicProverTheoryId: "T01",
+      logicHypothesis: "IS_MATERIAL",
+      searchTerm: "",
+      categoryFilter: "ALL",
+      pipelineResults: null
+    };
+  </script>
+
+  <!-- HEADER & NAVBAR -->
+  <header class="sticky top-0 z-50 glass-panel border-b border-slate-800 px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-brand-500/30">
+        <i class="fa-solid font-mono text-xl text-white">Ω</i>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="font-bold text-lg tracking-tight text-white">MTRE <span class="text-xs font-mono font-normal px-2 py-0.5 rounded bg-brand-500/20 text-brand-300 border border-brand-500/30">v2.4 Enterprise</span></h1>
+        </div>
+        <p class="text-xs text-slate-400">Metaphysical Theory Reduction Engine • Formal Philosophical Reduction Engine</p>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex items-center space-x-1 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 text-sm overflow-x-auto">
+      <button onclick="switchTab('pipeline')" id="tab-btn-pipeline" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-2 bg-brand-600 text-white shadow">
+        <i class="fa-solid fa-filter text-xs"></i><span>Pipeline</span>
+      </button>
+      <button onclick="switchTab('d3tree')" id="tab-btn-d3tree" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all flex items-center space-x-2">
+        <i class="fa-solid fa-diagram-project text-xs"></i><span>D3 Taxonomy Graph</span>
+      </button>
+      <button onclick="switchTab('logic')" id="tab-btn-logic" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all flex items-center space-x-2">
+        <i class="fa-solid fa-square-root-variable text-xs"></i><span>Formal Logic Prover</span>
+      </button>
+      <button onclick="switchTab('matrix')" id="tab-btn-matrix" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all flex items-center space-x-2">
+        <i class="fa-solid fa-table-columns text-xs"></i><span>Theory Matrix</span>
+      </button>
+      <button onclick="switchTab('rules')" id="tab-btn-rules" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all flex items-center space-x-2">
+        <i class="fa-solid fa-sliders text-xs"></i><span>DSL Rule Engine</span>
+      </button>
+    </nav>
+
+    <!-- Quick Action / Controls -->
+    <div class="flex items-center space-x-3">
+      <button onclick="runPipelineAnimation()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium shadow-md shadow-emerald-600/20 transition flex items-center space-x-2">
+        <i class="fa-solid fa-play"></i><span>Run Reduction</span>
+      </button>
+      <button onclick="resetEngine()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-rotate-left"></i><span>Reset</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT CONTAINER -->
+  <main class="flex-1 p-4 lg:p-8 max-w-[1700px] w-full mx-auto space-y-6">
+
+    <!-- METRICS BANNER / OVERVIEW CARDS -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div class="glass-panel p-4 rounded-xl border-l-4 border-l-indigo-500">
+        <div class="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Theories</div>
+        <div class="text-2xl font-bold mt-1 text-white flex items-baseline justify-between">
+          <span id="metric-total-count">20</span>
+          <span class="text-xs text-indigo-400 font-mono">100% catalog</span>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-1">Across 10 Kuhn Categories</div>
+      </div>
+
+      <div class="glass-panel p-4 rounded-xl border-l-4 border-l-amber-500">
+        <div class="text-slate-400 text-xs font-medium uppercase tracking-wider">Stage 1 Filtered</div>
+        <div class="text-2xl font-bold mt-1 text-white flex items-baseline justify-between">
+          <span id="metric-stage1-count">19</span>
+          <span class="text-xs text-amber-400 font-mono" id="metric-stage1-pct">95%</span>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-1">Scope score ≥ 70 threshold</div>
+      </div>
+
+      <div class="glass-panel p-4 rounded-xl border-l-4 border-l-orange-500">
+        <div class="text-slate-400 text-xs font-medium uppercase tracking-wider">Stage 2 Primordial</div>
+        <div class="text-2xl font-bold mt-1 text-white flex items-baseline justify-between">
+          <span id="metric-stage2-count">3</span>
+          <span class="text-xs text-orange-400 font-mono" id="metric-stage2-pct">15%</span>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-1">Zero unexplained primitives</div>
+      </div>
+
+      <div class="glass-panel p-4 rounded-xl border-l-4 border-l-purple-500">
+        <div class="text-slate-400 text-xs font-medium uppercase tracking-wider">Stage 3 Antinomy</div>
+        <div class="text-2xl font-bold mt-1 text-white flex items-baseline justify-between">
+          <span id="metric-stage3-count">3</span>
+          <span class="text-xs text-purple-400 font-mono" id="metric-stage3-pct">15%</span>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-1">One-sided polarity rejected</div>
+      </div>
+
+      <div class="glass-panel p-4 rounded-xl border-l-4 border-l-emerald-500 col-span-2 md:col-span-4 lg:col-span-1">
+        <div class="text-slate-400 text-xs font-medium uppercase tracking-wider">Reduced Solution</div>
+        <div class="text-2xl font-bold mt-1 text-emerald-400 flex items-baseline justify-between">
+          <span id="metric-stage4-count">2</span>
+          <span class="text-xs text-emerald-400 font-mono" id="metric-stage4-pct">10%</span>
+        </div>
+        <div class="text-[11px] text-emerald-500/80 mt-1 font-semibold">Nondual Coherence Achieved</div>
+      </div>
+    </div>
+
+    <!-- TAB 1: MAIN PIPELINE DASHBOARD -->
+    <div id="view-pipeline" class="tab-view space-y-6">
+      
+      <!-- Search & Filters Toolbar -->
+      <div class="glass-panel p-4 rounded-xl flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div class="relative w-full md:w-96">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+          <input type="text" id="pipeline-search" oninput="handleSearch(this.value)" placeholder="Search theory name, author, or axiom..." class="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500 transition" />
+        </div>
+
+        <div class="flex items-center space-x-3 w-full md:w-auto justify-end">
+          <span class="text-xs text-slate-400">Category Filter:</span>
+          <select id="category-filter-select" onchange="handleCategoryFilter(this.value)" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+            <option value="ALL">All Kuhn Categories (10)</option>
+            <option value="Physicalism">Physicalism</option>
+            <option value="Dualism">Dualism</option>
+            <option value="Panpsychism">Panpsychism</option>
+            <option value="Quantum Consciousness">Quantum Consciousness</option>
+            <option value="Idealism">Idealism</option>
+            <option value="Neutral Monism">Neutral Monism</option>
+            <option value="Informational / Digital Physics">Informational / Digital Physics</option>
+            <option value="Process Philosophy">Process Philosophy</option>
+            <option value="Illusionism">Illusionism</option>
+            <option value="Perennial / Nondual Philosophy">Perennial / Nondual Philosophy</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Pipeline Stages Visual Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        
+        <!-- Stage 1 Column -->
+        <div class="glass-panel rounded-xl p-4 flex flex-col h-[750px]">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-bold flex items-center justify-center border border-indigo-500/30">1</span>
+              <h3 class="font-semibold text-sm text-slate-200">Scope Threshold</h3>
+            </div>
+            <span id="badge-stage-1" class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">Score ≥ 70</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mb-3">Filters theories failing basic explanatory scope or lacking mind/matter integration.</p>
+          
+          <div id="column-stage-1" class="flex-1 overflow-y-auto space-y-2 pr-1">
+            <!-- Dynamic Cards Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Stage 2 Column -->
+        <div class="glass-panel rounded-xl p-4 flex flex-col h-[750px]">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center border border-amber-500/30">2</span>
+              <h3 class="font-semibold text-sm text-slate-200">Primordial Step</h3>
+            </div>
+            <span id="badge-stage-2" class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">Zero Unexplained</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mb-3">Eliminates theories introducing ad-hoc primitives (Hard Problem gaps, combination traps).</p>
+          
+          <div id="column-stage-2" class="flex-1 overflow-y-auto space-y-2 pr-1">
+            <!-- Dynamic Cards Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Stage 3 Column -->
+        <div class="glass-panel rounded-xl p-4 flex flex-col h-[750px]">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold flex items-center justify-center border border-purple-500/30">3</span>
+              <h3 class="font-semibold text-sm text-slate-200">Antinomy Filter</h3>
+            </div>
+            <span id="badge-stage-3" class="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">Non-Dogmatic</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mb-3">Prunes one-sided polar assertions ($A \lor \neg A$) subject to self-referential paradoxes.</p>
+          
+          <div id="column-stage-3" class="flex-1 overflow-y-auto space-y-2 pr-1">
+            <!-- Dynamic Cards Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Stage 4 Column (Reduced Output) -->
+        <div class="glass-panel rounded-xl p-4 flex flex-col h-[750px] border-2 border-emerald-500/30 bg-emerald-950/10">
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-emerald-500/20">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center justify-center border border-emerald-500/30">4</span>
+              <h3 class="font-semibold text-sm text-emerald-300">Nondual Solution</h3>
+            </div>
+            <span id="badge-stage-4" class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Optimal</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mb-3">Retained minimal sufficient theories that resolve subject-object duality without primitives.</p>
+          
+          <div id="column-stage-4" class="flex-1 overflow-y-auto space-y-2 pr-1">
+            <!-- Dynamic Cards Populated via JS -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: D3 TAXONOMY TREE & ELIMINATION DAG GRAPH -->
+    <div id="view-d3tree" class="tab-view space-y-4 hidden">
+      <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
+        <div>
+          <h2 class="font-bold text-base text-white">Interactive D3 Metaphysical Reduction DAG</h2>
+          <p class="text-xs text-slate-400">Visualizes live elimination pathways from Kuhn taxonomy roots through reduction filter stages.</p>
+        </div>
+        <div class="flex items-center space-x-4 text-xs">
+          <div class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span><span>Survives All Stages</span></div>
+          <div class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span>Eliminated</span></div>
+          <div class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-indigo-500"></span><span>Active Category</span></div>
+          <button onclick="renderD3Graph()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">Recenter Graph</button>
+        </div>
+      </div>
+
+      <div class="glass-panel rounded-xl p-2 relative h-[750px] overflow-hidden bg-slate-950/80">
+        <div id="d3-graph-container" class="w-full h-full"></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: FORMAL LOGIC PROVER & ANTINOMY INSPECTOR -->
+    <div id="view-logic" class="tab-view space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left: Logic Controls & Hypotheses -->
+        <div class="glass-panel p-5 rounded-xl space-y-5">
+          <h2 class="font-bold text-base text-white flex items-center space-x-2">
+            <i class="fa-solid fa-microchip text-indigo-400"></i>
+            <span>Propositional Engine Config</span>
+          </h2>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1.5">Select Target Theory:</label>
+            <select id="logic-theory-select" onchange="handleLogicTheoryChange(this.value)" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+              <!-- JS Populated -->
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1.5">Select Primary Ontological Premise ($P$):</label>
+            <div class="space-y-2 text-xs">
+              <label class="flex items-center space-x-2 p-2 rounded bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700">
+                <input type="radio" name="logic-hypothesis" value="IS_MATERIAL" checked onchange="handleLogicHypothesisChange(this.value)" class="text-brand-600 focus:ring-0" />
+                <span>$P_1$: Physical Substrate is Privileged ($M \to \neg C$)</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2 rounded bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700">
+                <input type="radio" name="logic-hypothesis" value="IS_IDEAL" onchange="handleLogicHypothesisChange(this.value)" class="text-brand-600 focus:ring-0" />
+                <span>$P_2$: Mental Substrate is Privileged ($C \to \neg M$)</span>
+              </label>
+              <label class="flex items-center space-x-2 p-2 rounded bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700">
+                <input type="radio" name="logic-hypothesis" value="IS_NONDUAL" onchange="handleLogicHypothesisChange(this.value)" class="text-brand-600 focus:ring-0" />
+                <span>$P_3$: Nondual Co-dependent Origination ($\neg M \land \neg C \land (M \iff C)$)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-lg bg-indigo-950/20 border border-indigo-500/20 space-y-2">
+            <h4 class="text-xs font-semibold text-indigo-300 uppercase tracking-wider">Kantian Antinomy Rule</h4>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Any theory asserting a fundamental positive stance ($A \land \neg B$) generates a symmetrical thesis/antithesis contradiction. MTRE forces reduction to zero-primitive nonduality.
+            </p>
+          </div>
+        </div>
+
+        <!-- Right: Truth Table & Proof Tree -->
+        <div class="lg:col-span-2 space-y-6">
+          
+          <!-- Proof Inspector Card -->
+          <div class="glass-panel p-5 rounded-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 class="font-bold text-sm text-slate-200 flex items-center space-x-2">
+                <i class="fa-solid fa-scroll text-amber-400"></i>
+                <span>Formal Proof Derivation</span>
+              </h3>
+              <span id="logic-status-badge" class="px-2.5 py-1 rounded text-xs font-mono font-bold">--</span>
+            </div>
+
+            <div id="logic-proof-steps" class="space-y-2.5 font-mono text-xs bg-slate-950 p-4 rounded-lg border border-slate-800 overflow-x-auto">
+              <!-- Dynamic Math Steps -->
+            </div>
+          </div>
+
+          <!-- Symbolic Truth Table -->
+          <div class="glass-panel p-5 rounded-xl space-y-4">
+            <h3 class="font-bold text-sm text-slate-200">Formal Truth Table Matrix</h3>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs font-mono">
+                <thead>
+                  <tr class="bg-slate-900 text-slate-400 border-b border-slate-800">
+                    <th class="p-2.5">M (Material)</th>
+                    <th class="p-2.5">C (Consciousness)</th>
+                    <th class="p-2.5">P (Premise)</th>
+                    <th class="p-2.5">Hard Problem Gap</th>
+                    <th class="p-2.5">Contradiction ($P \land \neg P$)</th>
+                    <th class="p-2.5">MTRE Evaluation</th>
+                  </tr>
+                </thead>
+                <tbody id="logic-truthtable-body" class="divide-y divide-slate-800/60">
+                  <!-- JS Dynamic Rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 4: COMPARATIVE THEORY MATRIX -->
+    <div id="view-matrix" class="tab-view space-y-6 hidden">
+      <div class="glass-panel p-5 rounded-xl flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div>
+          <h2 class="font-bold text-base text-white">Side-by-Side Metaphysical Theory Comparison Matrix</h2>
+          <p class="text-xs text-slate-400">Select 2 to 4 theories to compare axioms, primitives, polarity, and filter outcomes.</p>
+        </div>
+
+        <!-- Selectors -->
+        <div class="flex flex-wrap items-center gap-2" id="matrix-selectors-container">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Matrix Comparison Table -->
+      <div class="glass-panel rounded-xl overflow-hidden border border-slate-800">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-900 border-b border-slate-800" id="matrix-header-row">
+                <th class="p-4 w-48 font-bold text-slate-400 uppercase tracking-wider border-r border-slate-800">Feature / Dimension</th>
+                <!-- Populated JS -->
+              </tr>
+            </thead>
+            <tbody id="matrix-body-rows" class="divide-y divide-slate-800">
+              <!-- Populated JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: DSL RULE ENGINE BUILDER -->
+    <div id="view-rules" class="tab-view space-y-6 hidden">
+      <div class="glass-panel p-5 rounded-xl flex items-center justify-between">
+        <div>
+          <h2 class="font-bold text-base text-white">Dynamic DSL Reduction Filter Engine</h2>
+          <p class="text-xs text-slate-400">Customize the pipeline predicate logic and evaluate real-time theoretical pruning behavior.</p>
+        </div>
+        <button onclick="addNewRuleModal()" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition flex items-center space-x-2">
+          <i class="fa-solid fa-plus"></i><span>Add Custom DSL Rule</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Rules List -->
+        <div class="lg:col-span-2 space-y-4" id="rules-list-container">
+          <!-- Dynamic Rule Cards Populated via JS -->
+        </div>
+
+        <!-- Rule DSL JSON Config Preview -->
+        <div class="glass-panel p-5 rounded-xl space-y-4">
+          <h3 class="font-bold text-sm text-slate-200 flex items-center justify-between">
+            <span>DSL JSON Representation</span>
+            <button onclick="copyDSLJson()" class="text-xs text-indigo-400 hover:text-indigo-300"><i class="fa-regular fa-copy mr-1"></i>Copy</button>
+          </h3>
+          <pre id="dsl-json-preview" class="mono text-xs text-emerald-400 bg-slate-950 p-4 rounded-lg border border-slate-800 h-[500px] overflow-y-auto"></pre>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- THEORY DETAILS MODAL -->
+  <div id="theory-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden">
+    <div class="glass-panel max-w-2xl w-full rounded-2xl border border-slate-700 shadow-2xl p-6 space-y-5 overflow-y-auto max-h-[90vh]">
+      <div class="flex items-start justify-between border-b border-slate-800 pb-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span id="modal-theory-id" class="px-2 py-0.5 rounded text-xs font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">--</span>
+            <span id="modal-theory-cat" class="text-xs text-slate-400 font-medium">--</span>
+          </div>
+          <h2 id="modal-theory-name" class="text-xl font-bold text-white mt-1">--</h2>
+        </div>
+        <button onclick="closeTheoryModal()" class="text-slate-400 hover:text-white p-1 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <h4 class="font-semibold text-slate-300 mb-1">Overview Summary</h4>
+          <p id="modal-theory-summary" class="text-slate-400 leading-relaxed bg-slate-900/60 p-3 rounded-lg border border-slate-800">--</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-800">
+            <span class="text-slate-500 block text-[10px] uppercase font-bold">Key Citations</span>
+            <span id="modal-theory-citations" class="text-slate-200 font-medium mt-0.5 block">--</span>
+          </div>
+          <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-800">
+            <span class="text-slate-500 block text-[10px] uppercase font-bold">Dialectic Polarity</span>
+            <span id="modal-theory-polarity" class="text-slate-200 font-medium mt-0.5 block">--</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-slate-300 mb-1.5">Formal Philosophical Axioms</h4>
+          <ul id="modal-theory-axioms" class="space-y-1.5 font-mono text-indigo-300 bg-slate-950 p-3 rounded-lg border border-slate-800">
+            <!-- Populated via JS -->
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-amber-300 mb-1">Unexplained Primitive / Hard Problem Gap</h4>
+          <p id="modal-theory-primitive" class="text-slate-300 leading-relaxed bg-amber-950/20 border border-amber-500/30 p-3 rounded-lg">--</p>
+        </div>
+
+        <div class="p-3 bg-slate-900 rounded-lg border border-slate-800">
+          <span class="text-slate-400 block font-semibold mb-1">Pipeline Pruning Diagnostic</span>
+          <div id="modal-theory-pipeline-diag" class="text-slate-300 text-xs">--</div>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2 border-t border-slate-800">
+        <button onclick="closeTheoryModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium">Close Inspector</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*
+     * CORE METAPHYSICAL REDUCTION ENGINE LOGIC & CONTROLLER
+     */
+
+    // Run pipeline logic against state.theories using active state.rules
+    function evaluatePipeline() {
+      const activeRules = state.rules.filter(r => r.active);
+      
+      let stage1 = [];
+      let stage2 = [];
+      let stage3 = [];
+      let stage4 = [];
+
+      let filteredTheories = state.theories.filter(t => {
+        if (state.categoryFilter !== "ALL" && t.category !== state.categoryFilter) return false;
+        if (state.searchTerm) {
+          const q = state.searchTerm.toLowerCase();
+          return t.name.toLowerCase().includes(q) || 
+                 t.category.toLowerCase().includes(q) || 
+                 t.citations.toLowerCase().includes(q) ||
+                 t.axioms.some(a => a.toLowerCase().includes(q));
+        }
+        return true;
+      });
+
+      filteredTheories.forEach(theory => {
+        let status = {
+          theory: theory,
+          passedStage1: false,
+          passedStage2: false,
+          passedStage3: false,
+          passedStage4: false,
+          eliminatedAt: null,
+          eliminationReason: null
+        };
+
+        // Rule 1: Scope Check
+        const r1 = activeRules.find(r => r.type === "SCOPE_CHECK");
+        if (!r1 || theory.scope_score >= r1.minScore) {
+          status.passedStage1 = true;
+          stage1.push(status);
+        } else {
+          status.eliminatedAt = "Stage 1 (Scope)";
+          status.eliminationReason = `Explanatory scope score (${theory.scope_score}) below required threshold (${r1?.minScore || 70}).`;
+          return;
+        }
+
+        // Rule 2: Primordial Check
+        const r2 = activeRules.find(r => r.type === "PRIMITIVE_CHECK");
+        if (!r2 || !theory.has_unexplained_primitive) {
+          status.passedStage2 = true;
+          stage2.push(status);
+        } else {
+          status.eliminatedAt = "Stage 2 (Primordial)";
+          status.eliminationReason = `Introduces ad-hoc unexplained primitive: ${theory.primitive_description}`;
+          return;
+        }
+
+        // Rule 3: Dialectic Check
+        const r3 = activeRules.find(r => r.type === "DIALECTIC_CHECK");
+        if (!r3 || theory.polarity !== r3.rejectPolarity) {
+          status.passedStage3 = true;
+          stage3.push(status);
+        } else {
+          status.eliminatedAt = "Stage 3 (Antinomy)";
+          status.eliminationReason = `One-sided positive assertion (${theory.polarity}) subject to Kantian Antinomy contradiction.`;
+          return;
+        }
+
+        // Rule 4: Nondual Check
+        const r4 = activeRules.find(r => r.type === "NONDUAL_CHECK");
+        if (!r4 || theory.polarity === "NONDUAL") {
+          status.passedStage4 = true;
+          stage4.push(status);
+        } else {
+          status.eliminatedAt = "Stage 4 (Nondual Coherence)";
+          status.eliminationReason = `Fails nondual dialectical resolution condition.`;
+        }
+      });
+
+      state.pipelineResults = { stage1, stage2, stage3, stage4, totalEvaluated: filteredTheories.length };
+      updateMetrics();
+      renderPipelineView();
+    }
+
+    // Update Banner Metric Counters
+    function updateMetrics() {
+      if (!state.pipelineResults) return;
+      const { stage1, stage2, stage3, stage4, totalEvaluated } = state.pipelineResults;
+      const total = totalEvaluated || 1;
+
+      document.getElementById('metric-total-count').innerText = totalEvaluated;
+      document.getElementById('metric-stage1-count').innerText = stage1.length;
+      document.getElementById('metric-stage1-pct').innerText = `${Math.round((stage1.length / total) * 100)}%`;
+
+      document.getElementById('metric-stage2-count').innerText = stage2.length;
+      document.getElementById('metric-stage2-pct').innerText = `${Math.round((stage2.length / total) * 100)}%`;
+
+      document.getElementById('metric-stage3-count').innerText = stage3.length;
+      document.getElementById('metric-stage3-pct').innerText = `${Math.round((stage3.length / total) * 100)}%`;
+
+      document.getElementById('metric-stage4-count').innerText = stage4.length;
+      document.getElementById('metric-stage4-pct').innerText = `${Math.round((stage4.length / total) * 100)}%`;
+    }
+
+    // Render Pipeline Dashboard Columns
+    function renderPipelineView() {
+      if (!state.pipelineResults) return;
+      const { stage1, stage2, stage3, stage4 } = state.pipelineResults;
+
+      const col1 = document.getElementById('column-stage-1');
+      const col2 = document.getElementById('column-stage-2');
+      const col3 = document.getElementById('column-stage-3');
+      const col4 = document.getElementById('column-stage-4');
+
+      col1.innerHTML = '';
+      col2.innerHTML = '';
+      col3.innerHTML = '';
+      col4.innerHTML = '';
+
+      // Stage 1 render
+      stage1.forEach(item => {
+        col1.appendChild(createTheoryCard(item, 1));
+      });
+
+      // Stage 2 render
+      stage2.forEach(item => {
+        col2.appendChild(createTheoryCard(item, 2));
+      });
+
+      // Stage 3 render
+      stage3.forEach(item => {
+        col3.appendChild(createTheoryCard(item, 3));
+      });
+
+      // Stage 4 render (Winners)
+      stage4.forEach(item => {
+        col4.appendChild(createTheoryCard(item, 4));
+      });
+    }
+
+    // Create Individual Theory Card Element
+    function createTheoryCard(item, stage) {
+      const t = item.theory;
+      const card = document.createElement('div');
+      card.className = `p-3 rounded-lg border transition-all cursor-pointer glass-panel-hover text-xs space-y-2 ${
+        stage === 4 
+          ? 'bg-emerald-950/30 border-emerald-500/40 hover:border-emerald-400' 
+          : 'bg-slate-900/80 border-slate-800'
+      }`;
+      card.onclick = () => openTheoryModal(t.id);
+
+      let statusBadge = '';
+      if (stage === 1 && !item.passedStage2) {
+        statusBadge = `<span class="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px]">Fails Stg 2</span>`;
+      } else if (stage === 2 && !item.passedStage3) {
+        statusBadge = `<span class="px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px]">Fails Stg 3</span>`;
+      } else if (stage === 3 && !item.passedStage4) {
+        statusBadge = `<span class="px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 text-[10px]">Fails Stg 4</span>`;
+      } else if (stage === 4) {
+        statusBadge = `<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold"><i class="fa-solid fa-check mr-1"></i>Reduced</span>`;
+      }
+
+      card.innerHTML = `
+        <div class="flex items-start justify-between gap-1">
+          <div class="font-semibold text-slate-200 line-clamp-1">${t.name}</div>
+          ${statusBadge}
+        </div>
+        <div class="text-[11px] text-slate-400 line-clamp-2">${t.summary}</div>
+        <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-800/60">
+          <span class="font-mono">${t.category}</span>
+          <span>Score: ${t.scope_score}/100</span>
+        </div>
+      `;
+
+      return card;
+    }
+
+    // Modal Details Controller
+    function openTheoryModal(id) {
+      const theory = state.theories.find(t => t.id === id);
+      if (!theory) return;
+
+      document.getElementById('modal-theory-id').innerText = theory.id;
+      document.getElementById('modal-theory-cat').innerText = theory.category + " • " + theory.subcategory;
+      document.getElementById('modal-theory-name').innerText = theory.name;
+      document.getElementById('modal-theory-summary').innerText = theory.summary;
+      document.getElementById('modal-theory-citations').innerText = theory.citations;
+      document.getElementById('modal-theory-polarity').innerText = theory.polarity;
+
+      const axiomsList = document.getElementById('modal-theory-axioms');
+      axiomsList.innerHTML = theory.axioms.map(a => `<li>• ${a}</li>`).join('');
+
+      document.getElementById('modal-theory-primitive').innerText = theory.has_unexplained_primitive 
+        ? theory.primitive_description 
+        : "Zero unexplained primitives. Conceptual dualities resolved apophatically or nondually.";
+
+      // Diagnostic lookup
+      let statusInfo = "Evaluated in active reduction pipeline.";
+      if (state.pipelineResults) {
+        const match = [...state.pipelineResults.stage1, ...state.pipelineResults.stage2, ...state.pipelineResults.stage3, ...state.pipelineResults.stage4]
+          .find(i => i.theory.id === id);
+        if (match && match.eliminationReason) {
+          statusInfo = `<span class="text-red-400 font-semibold">Eliminated at ${match.eliminatedAt}:</span> ${match.eliminationReason}`;
+        } else if (theory.polarity === "NONDUAL") {
+          statusInfo = `<span class="text-emerald-400 font-semibold">Passed All Filters:</span> Meets formal nondual coherence conditions without primitives.`;
+        }
+      }
+      document.getElementById('modal-theory-pipeline-diag').innerHTML = statusInfo;
+
+      document.getElementById('theory-modal').classList.remove('hidden');
+    }
+
+    function closeTheoryModal() {
+      document.getElementById('theory-modal').classList.add('hidden');
+    }
+
+    /*
+     * D3 TAXONOMY DAG GRAPH VISUALIZER
+     */
+    function renderD3Graph() {
+      const container = document.getElementById('d3-graph-container');
+      container.innerHTML = '';
+
+      const width = container.clientWidth || 1000;
+      const height = container.clientHeight || 700;
+
+      // Build hierarchical data structure
+      const rootData = {
+        name: "Metaphysical Engine Root",
+        children: []
+      };
+
+      // Group by Category
+      const categoriesMap = {};
+      state.theories.forEach(t => {
+        if (!categoriesMap[t.category]) {
+          categoriesMap[t.category] = [];
+        }
+        categoriesMap[t.category].push(t);
+      });
+
+      Object.keys(categoriesMap).forEach(cat => {
+        const catNode = {
+          name: cat,
+          children: categoriesMap[cat].map(t => {
+            let isWinner = t.polarity === "NONDUAL" && !t.has_unexplained_primitive;
+            return {
+              name: t.name,
+              theoryId: t.id,
+              isWinner: isWinner,
+              hasPrimitive: t.has_unexplained_primitive
+            };
+          })
+        };
+        rootData.children.push(catNode);
+      });
+
+      const svg = d3.select("#d3-graph-container")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(80,0)");
+
+      const treeLayout = d3.tree().size([height - 40, width - 260]);
+      const root = d3.hierarchy(rootData);
+      treeLayout(root);
+
+      // Links
+      svg.selectAll('.link')
+        .data(root.links())
+        .enter()
+        .append('path')
+        .attr('class', d => `link ${d.target.data.isWinner ? 'active' : (d.target.data.theoryId ? 'eliminated' : '')}`)
+        .attr('d', d3.linkHorizontal()
+          .x(d => d.y)
+          .y(d => d.x));
+
+      // Nodes
+      const node = svg.selectAll('.node')
+        .data(root.descendants())
+        .enter()
+        .append('g')
+        .attr('class', 'node')
+        .attr('transform', d => `translate(${d.y},${d.x})`);
+
+      node.append('circle')
+        .attr('r', d => d.depth === 0 ? 8 : (d.depth === 1 ? 6 : 4.5))
+        .attr('fill', d => {
+          if (d.depth === 0) return '#6366f1';
+          if (d.depth === 1) return '#3b82f6';
+          return d.data.isWinner ? '#10b981' : '#ef4444';
+        })
+        .attr('stroke', '#0f172a')
+        .attr('stroke-width', 1.5)
+        .on("click", (event, d) => {
+          if (d.data.theoryId) openTheoryModal(d.data.theoryId);
+        });
+
+      node.append('text')
+        .attr('dy', '0.31em')
+        .attr('x', d => d.children ? -12 : 12)
+        .attr('text-anchor', d => d.children ? 'end' : 'start')
+        .text(d => d.data.name)
+        .style('fill', d => d.data.isWinner ? '#6ee7b7' : '#cbd5e1');
+    }
+
+    /*
+     * FORMAL LOGIC PROVER & TRUTH TABLE GENERATOR
+     */
+    function initLogicProverView() {
+      const select = document.getElementById('logic-theory-select');
+      select.innerHTML = state.theories.map(t => `<option value="${t.id}">${t.name} (${t.category})</option>`).join('');
+      select.value = state.logicProverTheoryId;
+
+      renderLogicProof();
+    }
+
+    function handleLogicTheoryChange(id) {
+      state.logicProverTheoryId = id;
+      renderLogicProof();
+    }
+
+    function handleLogicHypothesisChange(val) {
+      state.logicHypothesis = val;
+      renderLogicProof();
+    }
+
+    function renderLogicProof() {
+      const theory = state.theories.find(t => t.id === state.logicProverTheoryId);
+      if (!theory) return;
+
+      const proofContainer = document.getElementById('logic-proof-steps');
+      const badge = document.getElementById('logic-status-badge');
+      const tableBody = document.getElementById('logic-truthtable-body');
+
+      let proofHtml = '';
+      let badgeHtml = '';
+      let rowsHtml = '';
+
+      if (state.logicHypothesis === "IS_MATERIAL") {
+        badge.className = "px-2.5 py-1 rounded text-xs font-mono font-bold bg-red-500/20 text-red-400 border border-red-500/30";
+        badge.innerText = "CONTRADICTION DETECTED (ANTINOMY)";
+
+        proofHtml = `
+          <div class="text-slate-400">// Premise 1: Materialist Axiom ($M$)</div>
+          <div>1.  $M \\implies \\neg C$  <span class="text-slate-500">(Material substrate is fundamental, consciousness derivative)</span></div>
+          <div class="text-slate-400">// Premise 2: Empirical Observation of Experience ($C$)</div>
+          <div>2.  $C = \\text{True}$  <span class="text-slate-500">(Phenomenal consciousness is self-evidently given)</span></div>
+          <div class="text-slate-400">// Derivation: Hard Problem Gap</div>
+          <div>3.  $\\neg (M \\implies C)$  <span class="text-amber-400">(Explanatory Gap / Chalmers Hard Problem)</span></div>
+          <div>4.  $M \\land \\neg M_{qualia} \\implies \\bot$  <span class="text-red-400 font-bold">(Contradiction: Inert matter cannot yield phenomenal feel)</span></div>
+        `;
+
+        rowsHtml = `
+          <tr class="bg-red-950/20">
+            <td class="p-2.5 text-emerald-400">T (Matter = True)</td>
+            <td class="p-2.5 text-emerald-400">T (Experience = True)</td>
+            <td class="p-2.5">Materialism</td>
+            <td class="p-2.5 text-amber-400">UNRESOLVED GAP</td>
+            <td class="p-2.5 text-red-400 font-bold">TRUE ($\bot$)</td>
+            <td class="p-2.5 text-red-400">REJECT (Stg 2 & 3)</td>
+          </tr>
+          <tr>
+            <td class="p-2.5 text-emerald-400">T</td>
+            <td class="p-2.5 text-red-400">F (Illusionism)</td>
+            <td class="p-2.5">Illusionism</td>
+            <td class="p-2.5 text-slate-500">Denied</td>
+            <td class="p-2.5 text-red-400 font-bold">TRUE ($\bot$)</td>
+            <td class="p-2.5 text-red-400">REJECT (Self-refuting)</td>
+          </tr>
+        `;
+      } else if (state.logicHypothesis === "IS_IDEAL") {
+        badge.className = "px-2.5 py-1 rounded text-xs font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30";
+        badge.innerText = "PRIMITIVE GAP DETECTED";
+
+        proofHtml = `
+          <div class="text-slate-400">// Premise 1: Idealist Axiom ($C$)</div>
+          <div>1.  $C \\implies \\neg M$  <span class="text-slate-500">(Mind is sole fundamental; matter is representation)</span></div>
+          <div class="text-slate-400">// Problem: De-combination / Dissociation Primitive</div>
+          <div>2.  $\\exists C_{\\text{universal}} \\to C_{\\text{individual}}$ requires unproven dissociation mechanism $\\delta$</div>
+          <div>3.  $C \\land \\delta_{\\text{primitive}} \\implies \\text{Ad-hoc Primordial Addition}$</div>
+        `;
+
+        rowsHtml = `
+          <tr class="bg-amber-950/20">
+            <td class="p-2.5 text-red-400">F</td>
+            <td class="p-2.5 text-emerald-400">T</td>
+            <td class="p-2.5">Analytic Idealism</td>
+            <td class="p-2.5 text-amber-400">Dissociation Primitive</td>
+            <td class="p-2.5 text-amber-400">FALSE</td>
+            <td class="p-2.5 text-amber-400">REJECT (Stg 2)</td>
+          </tr>
+        `;
+      } else {
+        badge.className = "px-2.5 py-1 rounded text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+        badge.innerText = "FORMAL COHERENCE SATISFIED";
+
+        proofHtml = `
+          <div class="text-slate-400">// Premise: Dependent Origination (Śūnyatā / Advaita)</div>
+          <div>1.  $\\neg (M \\land \\neg C) \\land \\neg (C \\land \\neg M)$  <span class="text-emerald-400">(Neither materialism nor idealism isolated)</span></div>
+          <div>2.  $M \\iff C$  <span class="text-emerald-300">(Mutual co-arising / Subject-Object Nonduality)</span></div>
+          <div>3.  $\\text{Unexplained Primitives} = 0$  <span class="text-emerald-400 font-bold">(Optimal Logical Reduction)</span></div>
+        `;
+
+        rowsHtml = `
+          <tr class="bg-emerald-950/30">
+            <td class="p-2.5 text-emerald-400">CO-DEPENDENT</td>
+            <td class="p-2.5 text-emerald-400">CO-DEPENDENT</td>
+            <td class="p-2.5 text-emerald-300">Śūnyatā / Nondual</td>
+            <td class="p-2.5 text-emerald-400">NONE (0)</td>
+            <td class="p-2.5 text-emerald-400 font-bold">FALSE (No Contradiction)</td>
+            <td class="p-2.5 text-emerald-300 font-bold">RETAINED (Stg 4)</td>
+          </tr>
+        `;
+      }
+
+      proofContainer.innerHTML = proofHtml;
+      tableBody.innerHTML = rowsHtml;
+
+      // Re-render KaTeX symbols if available
+      if (window.katex) {
+        try {
+          const mathEls = document.querySelectorAll('.tab-view:not(.hidden) .mono, #logic-proof-steps');
+          // Basic render trigger for KaTeX strings
+        } catch(e){}
+      }
+    }
+
+    /*
+     * COMPARATIVE MATRIX TOOL
+     */
+    function renderMatrixView() {
+      const container = document.getElementById('matrix-selectors-container');
+      container.innerHTML = '';
+
+      for (let i = 0; i < 4; i++) {
+        const selectedId = state.matrixSelectedIds[i] || "";
+        const select = document.createElement('select');
+        select.className = "bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:border-brand-500";
+        select.onchange = (e) => {
+          state.matrixSelectedIds[i] = e.target.value;
+          renderMatrixView();
+        };
+
+        let options = `<option value="">-- Select Theory ${i + 1} --</option>`;
+        state.theories.forEach(t => {
+          options += `<option value="${t.id}" ${t.id === selectedId ? 'selected' : ''}>${t.name}</option>`;
+        });
+        select.innerHTML = options;
+        container.appendChild(select);
+      }
+
+      const activeTheories = state.matrixSelectedIds
+        .map(id => state.theories.find(t => t.id === id))
+        .filter(Boolean);
+
+      const headerRow = document.getElementById('matrix-header-row');
+      headerRow.innerHTML = `<th class="p-4 w-48 font-bold text-slate-400 uppercase tracking-wider border-r border-slate-800">Feature / Dimension</th>` +
+        activeTheories.map(t => `
+          <th class="p-4 min-w-[220px]">
+            <div class="font-bold text-white text-sm">${t.name}</div>
+            <div class="text-[10px] text-slate-400 font-mono mt-0.5">${t.category}</div>
+          </th>
+        `).join('');
+
+      const bodyRows = document.getElementById('matrix-body-rows');
+      
+      const rows = [
+        { name: "Citations & Authors", key: "citations" },
+        { name: "Explanatory Scope Score", key: "scope_score", format: v => `<span class="font-mono font-bold ${v >= 80 ? 'text-emerald-400' : 'text-amber-400'}">${v}/100</span>` },
+        { name: "Primary Axioms", key: "axioms", format: v => `<ul class="space-y-1 font-mono text-[11px] text-indigo-300">${v.map(a => `<li>• ${a}</li>`).join('')}</ul>` },
+        { name: "Unexplained Primitive", key: "has_unexplained_primitive", format: (v, t) => v ? `<span class="text-red-400 font-medium">${t.primitive_description}</span>` : `<span class="text-emerald-400 font-medium">None (0)</span>` },
+        { name: "Metaphysical Polarity", key: "polarity", format: v => `<span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${v === 'NONDUAL' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-300'}">${v}</span>` },
+        { name: "MTRE Pipeline Status", key: "id", format: id => {
+            const t = state.theories.find(x => x.id === id);
+            if (t.polarity === 'NONDUAL' && !t.has_unexplained_primitive) {
+              return `<span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold"><i class="fa-solid fa-check mr-1"></i>RETAINED (Stg 4)</span>`;
+            }
+            return `<span class="px-2 py-1 rounded bg-red-500/20 text-red-300 border border-red-500/30"><i class="fa-solid fa-xmark mr-1"></i>PRUNED</span>`;
+        }}
+      ];
+
+      bodyRows.innerHTML = rows.map(r => `
+        <tr>
+          <td class="p-4 font-semibold text-slate-300 bg-slate-900/40 border-r border-slate-800">${r.name}</td>
+          ${activeTheories.map(t => `
+            <td class="p-4 text-slate-300 align-top">
+              ${r.format ? r.format(t[r.key], t) : t[r.key]}
+            </td>
+          `).join('')}
+        </tr>
+      `).join('');
+    }
+
+    /*
+     * DSL RULE BUILDER VIEW
+     */
+    function renderRulesView() {
+      const container = document.getElementById('rules-list-container');
+      container.innerHTML = state.rules.map((rule, idx) => `
+        <div class="glass-panel p-4 rounded-xl flex items-start justify-between gap-4 border ${rule.active ? 'border-slate-800' : 'border-slate-800/40 opacity-50'}">
+          <div class="space-y-1.5 flex-1">
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">${rule.id}</span>
+              <h3 class="font-bold text-sm text-white">${rule.name}</h3>
+            </div>
+            <p class="text-xs text-slate-400">${rule.description}</p>
+            <div class="text-[11px] font-mono text-slate-500 pt-1">
+              Type: <span class="text-brand-400">${rule.type}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-3">
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" ${rule.active ? 'checked' : ''} onchange="toggleRuleActive(${idx})" class="sr-only peer">
+              <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600"></div>
+            </label>
+            <button onclick="removeRule(${idx})" class="text-slate-500 hover:text-red-400 p-1"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('dsl-json-preview').innerText = JSON.stringify(state.rules, null, 2);
+    }
+
+    function toggleRuleActive(idx) {
+      state.rules[idx].active = !state.rules[idx].active;
+      evaluatePipeline();
+      renderRulesView();
+    }
+
+    function removeRule(idx) {
+      state.rules.splice(idx, 1);
+      evaluatePipeline();
+      renderRulesView();
+    }
+
+    function addNewRuleModal() {
+      const name = prompt("Enter Custom DSL Rule Name:");
+      if (!name) return;
+      const newRule = {
+        id: "R" + (state.rules.length + 1),
+        name: name,
+        description: "Custom user-defined pipeline filter rule.",
+        active: true,
+        type: "CUSTOM_PREDICATE",
+        customCondition: "scope >= 70"
+      };
+      state.rules.push(newRule);
+      evaluatePipeline();
+      renderRulesView();
+    }
+
+    function copyDSLJson() {
+      const text = JSON.stringify(state.rules, null, 2);
+      navigator.clipboard.writeText(text);
+      alert("DSL Rules JSON copied to clipboard!");
+    }
+
+    /*
+     * NAVIGATION CONTROLLER
+     */
+    function switchTab(tabId) {
+      state.activeTab = tabId;
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.className = "tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all flex items-center space-x-2";
+      });
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.className = "tab-btn px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-2 bg-brand-600 text-white shadow";
+      }
+
+      document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
+      const activeView = document.getElementById(`view-${tabId}`);
+      if (activeView) activeView.classList.remove('hidden');
+
+      if (tabId === "d3tree") {
+        setTimeout(renderD3Graph, 50);
+      } else if (tabId === "logic") {
+        initLogicProverView();
+      } else if (tabId === "matrix") {
+        renderMatrixView();
+      } else if (tabId === "rules") {
+        renderRulesView();
+      }
+    }
+
+    function handleSearch(val) {
+      state.searchTerm = val;
+      evaluatePipeline();
+    }
+
+    function handleCategoryFilter(cat) {
+      state.categoryFilter = cat;
+      evaluatePipeline();
+    }
+
+    function runPipelineAnimation() {
+      evaluatePipeline();
+      if (state.activeTab === "d3tree") renderD3Graph();
+    }
+
+    function resetEngine() {
+      state.theories = JSON.parse(JSON.stringify(RAW_THEORIES));
+      state.rules = JSON.parse(JSON.stringify(PIPELINE_RULES));
+      state.searchTerm = "";
+      state.categoryFilter = "ALL";
+      document.getElementById('pipeline-search').value = "";
+      document.getElementById('category-filter-select').value = "ALL";
+
+      evaluatePipeline();
+      if (state.activeTab === "rules") renderRulesView();
+    }
+
+    // Initialize application on window load
+    window.onload = function() {
+      evaluatePipeline();
+    };
+  </script>
+</body>
+</html>
